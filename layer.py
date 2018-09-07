@@ -142,22 +142,25 @@ def max_pool(
 
 def repeat(
         input,
-        layer,
+        layer_dict,
         count,
         name='_Repeat',
-        kwargs={},
         layer_collector=None,
         param_collector=None,
 ):
-    if 'layer_collector' in inspect.signature(layer).parameters.keys():
+    method = layer_dict['method']
+    args = layer_dict['args']
+    kwargs = layer_dict['kwargs']
+
+    if 'layer_collector' in inspect.signature(method).parameters.keys():
         kwargs['layer_collector'] = layer_collector
-    if 'param_collector' in inspect.signature(layer).parameters.keys():
+    if 'param_collector' in inspect.signature(method).parameters.keys():
         kwargs['param_collector'] = param_collector
 
     l = input
     for idx in range(count):
         with tf.variable_scope(name+'_'+str(idx+1)):
-            l = layer(l, **kwargs)
+            l = method(l, *args, **kwargs)
             safe_append(layer_collector, l)
 
     return l
@@ -165,21 +168,15 @@ def repeat(
 
 def residual(
         input,
-        layer,
+        layer_dict,
         step=2,
         activation=tf.nn.relu,
         name='_Residual',
-        kwargs={},
         layer_collector=None,
         param_collector=None,
 ):
-    if 'layer_collector' in inspect.signature(layer).parameters.keys():
-        kwargs['layer_collector'] = layer_collector
-    if 'param_collector' in inspect.signature(layer).parameters.keys():
-        kwargs['param_collector'] = param_collector
-
     with tf.variable_scope(name):
-        l = repeat(input, layer, step, **kwargs)
+        l = repeat(input, layer_dict, step, layer_collector=layer_collector, param_collector=param_collector)
         l = tf.add(l, input)
 
     if activation:
@@ -191,20 +188,23 @@ def residual(
 
 def dense_connection(
         input,
-        layer,
+        layer_dict,
         activation=None,
         name='_DenseConnect',
-        kwargs={},
         layer_collector=None,
         param_collector=None,
 ):
-    if 'layer_collector' in inspect.signature(layer).parameters.keys():
+    method = layer_dict['method']
+    args = layer_dict['args']
+    kwargs = layer_dict['kwargs']
+
+    if 'layer_collector' in inspect.signature(method).parameters.keys():
         kwargs['layer_collector'] = layer_collector
-    if 'param_collector' in inspect.signature(layer).parameters.keys():
+    if 'param_collector' in inspect.signature(method).parameters.keys():
         kwargs['param_collector'] = param_collector
 
     with tf.variable_scope(name):
-        l = layer(input, **kwargs)
+        l = method(input, *args, **kwargs)
         l = tf.concat((input, l), axis=3)
         safe_append(layer_collector, l)
 
@@ -217,18 +217,23 @@ def dense_connection(
 
 def dense_block(
         input,
+        layer_dict,
         iterate,
         activation=tf.nn.relu,
         name='_DenseBlock',
-        kwargs={},
         layer_collector=None,
         param_collector=None,
 ):
-    kwargs['layer_collector'] = layer_collector
-    kwargs['param_collector'] = param_collector
+    layer_dict = {
+        'method': dense_connection,
+        'args': (),
+        'kwargs': {
+            'layer_dict': layer_dict
+        }
+    }
 
     with tf.variable_scope(name):
-        l = repeat(input, dense_connection, iterate, **kwargs)
+        l = repeat(input, layer_dict, iterate, layer_collector=layer_collector, param_collector=param_collector)
 
     if activation:
         l = activation(l, name=name + '_' + activation.__name__)
