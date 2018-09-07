@@ -133,7 +133,7 @@ def max_pool(
         name='_MaxPooling',
         layer_collector=None
 ):
-    l = tf.nn.max_pool(input, kernel_size, stride_size, padding, name)
+    l = tf.nn.max_pool(input, kernel_size, stride_size, padding, name=name)
     safe_append(layer_collector, l)
 
     return l
