@@ -1,4 +1,5 @@
 import tensorflow as tf
+from .util import *
 
 
 def Activation(x, activation, name=''):
@@ -24,3 +25,13 @@ def Scale(x, width, height, params=(), name=''):
 def BatchNorm(x, params=(), name=''):
     return tf.layers.batch_normalization(x, **params, name=name)
 
+
+def Softmax(
+        input,
+        name='_Softmax',
+        layer_collector=None,
+):
+    l = tf.nn.softmax(input, name=name)
+    safe_append(layer_collector, l)
+
+    return l
