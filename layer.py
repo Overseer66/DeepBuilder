@@ -3,11 +3,13 @@ import tensorflow as tf
 import numpy as np
 from .util import *
 
+
 def reshape(input, shape, name='_Reshape', layer_collector=None, param_collector=None):
     l = tf.reshape(input, shape, name=name)
     safe_append(layer_collector, l)
 
     return l
+
 
 def flatten(input, name='_Dense', layer_collector=None, param_collector=None):
     try:
@@ -20,6 +22,7 @@ def flatten(input, name='_Dense', layer_collector=None, param_collector=None):
 
     return l
 
+
 def fully_connected_layer(
         input,
         output_size,
@@ -29,7 +32,7 @@ def fully_connected_layer(
         name='_Dense',
         layer_collector=None,
         param_collector=None
-):
+    ):
     w = tf.get_variable(name + '_weight', [input.get_shape()[1], output_size], initializer=initializer)
     safe_append(param_collector, w)
     b = tf.get_variable(name + '_bias', [output_size], initializer=initializer, dtype=tf.float32)
@@ -60,7 +63,7 @@ def conv_2d(
         name='_Conv2D',
         layer_collector=None,
         param_collector=None
-):
+    ):
     if type(kernel_size) == tuple: kernel_size = list(kernel_size)
     if kernel_size[2] == -1: kernel_size = [kernel_size[0], kernel_size[1], input.get_shape()[-1], kernel_size[3]]
 
@@ -96,7 +99,7 @@ def deconv_2d(
         name='_Deconv2D',
         layer_collector=None,
         param_collector=None
-):
+    ):
     if type(kernel_size) == tuple: kernel_size = list(kernel_size)
     if kernel_size[2] == -1: kernel_size = [kernel_size[0], kernel_size[1], output_shape[-1], kernel_size[3]]
     if kernel_size[3] == -1: kernel_size = [kernel_size[0], kernel_size[1], kernel_size[2], input.get_shape()[-1]]
@@ -132,7 +135,7 @@ def max_pool(
         padding='SAME',
         name='_MaxPooling',
         layer_collector=None
-):
+    ):
     l = tf.nn.max_pool(input, kernel_size, stride_size, padding, name=name)
     safe_append(layer_collector, l)
 
@@ -146,7 +149,7 @@ def repeat(
         name='_Repeat',
         layer_collector=None,
         param_collector=None,
-):
+    ):
     method = layer_dict['method']
     args = layer_dict['args']
     kwargs = layer_dict['kwargs']
@@ -173,7 +176,7 @@ def residual(
         name='_Residual',
         layer_collector=None,
         param_collector=None,
-):
+    ):
     with tf.variable_scope(name):
         l = repeat(input, layer_dict, step, layer_collector=layer_collector, param_collector=param_collector)
         l = tf.add(l, input)
@@ -192,7 +195,7 @@ def dense_connection(
         name='_DenseConnect',
         layer_collector=None,
         param_collector=None,
-):
+    ):
     method = layer_dict['method']
     args = layer_dict['args']
     kwargs = layer_dict['kwargs']
@@ -222,7 +225,7 @@ def dense_block(
         name='_DenseBlock',
         layer_collector=None,
         param_collector=None,
-):
+    ):
     layer_dict = {
         'method': dense_connection,
         'args': (),
@@ -239,3 +242,6 @@ def dense_block(
         safe_append(layer_collector, l)
 
     return l
+
+
+
