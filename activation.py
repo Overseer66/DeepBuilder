@@ -3,7 +3,7 @@ from .util import *
 
 
 def Activation(input, activation, kwargs={}, name=None, layer_collector=None):
-    name = activation.name if name = None else name
+    name = activation.name if name == None else name
     l = activation(input, **kwargs, name=name)
     safe_append(layer_collector, l)
     return l
@@ -14,7 +14,7 @@ def LeakyReLU(input, leak=0.2, name='_LeakyReLU', layer_collector=None):
         f1 = 0.5 * (1 + leak)
         f2 = 0.5 * (1 - leak)
         l = f1 * input + f2 * abs(input)
-        safe_append(l)
+        safe_append(layer_collector, l)
         return l
 
 
