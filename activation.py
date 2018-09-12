@@ -2,36 +2,35 @@ import tensorflow as tf
 from .util import *
 
 
-def Activation(x, activation, name=''):
-    return activation(x, name=name)
+def Activation(input, activation, kwargs={}, name=None, layer_collector=None):
+    name = activation.name if name = None else name
+    l = activation(input, **kwargs, name=name)
+    safe_append(layer_collector, l)
+    return l
 
 
-def LeakyReLU(x, leak=0.2, name='LeakyReLU'):
+def LeakyReLU(input, leak=0.2, name='_LeakyReLU', layer_collector=None):
     with tf.name_scope(name):
         f1 = 0.5 * (1 + leak)
         f2 = 0.5 * (1 - leak)
-        return f1 * x + f2 * abs(x)
+        l = f1 * input + f2 * abs(input)
+        safe_append(l)
+        return l
 
 
-def LinearUnit(x, name='Linear'):
-    with tf.name_scope(name):
-        return x
-
-
-def Scale(x, width, height, params=(), name=''):
-    return tf.image.resize_nearest_neighbor(x, (width, height), **params, name=name)
-
-
-def BatchNorm(x, params=(), name=''):
-    return tf.layers.batch_normalization(x, **params, name=name)
-
-
-def Softmax(
-        input,
-        name='_Softmax',
-        layer_collector=None,
-):
-    l = tf.nn.softmax(input, name=name)
+def Scale(input, width, height, kwargs={}, name='_Scale', layer_collector=None):
+    l = tf.image.resize_nearest_neighbor(input, (width, height), **kwargs, name=name)
     safe_append(layer_collector, l)
+    return l
 
+
+def BatchNorm(input, kwargs={}, name='_BatchNorm', layer_collector=None):
+    l = tf.layers.batch_normalization(input, **kwargs, name=name)
+    safe_append(layer_collector, l)
+    return l
+
+
+def Softmax(input, kwargs={}, name='_Softmax', layer_collector=None):
+    l = tf.nn.softmax(input, **kwargs, name=name)
+    safe_append(layer_collector, l)
     return l
