@@ -33,7 +33,7 @@ def fully_connected_layer(
         layer_collector=None,
         param_collector=None
     ):
-    w = tf.get_variable(name + '_weight', [input.get_shape()[1], output_size], initializer=initializer)
+    w = tf.get_variable(name + '_weight', [input.get_shape()[-1], output_size], initializer=initializer)
     safe_append(param_collector, w)
     b = tf.get_variable(name + '_bias', [output_size], initializer=initializer, dtype=tf.float32)
     safe_append(param_collector, b)
