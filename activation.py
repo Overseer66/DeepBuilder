@@ -1,10 +1,15 @@
 import tensorflow as tf
 from .util import *
 
+def Dropout(input, keep_prob, name='_Dropout', layer_collector=None, *args, **kwargs):
+    l = tf.nn.dropout(input, keep_prob, *args, **kwargs, name=name)
+    safe_append(layer_collector, l)
+    return l
 
-def Activation(input, activation, kwargs={}, name=None, layer_collector=None):
+
+def Activation(input, activation, name=None, layer_collector=None, *args, **kwargs):
     name = activation.name if name == None else name
-    l = activation(input, **kwargs, name=name)
+    l = activation(input, *args, **kwargs, name=name)
     safe_append(layer_collector, l)
     return l
 
@@ -18,19 +23,28 @@ def LeakyReLU(input, leak=0.2, name='_LeakyReLU', layer_collector=None):
         return l
 
 
-def Scale(input, width, height, kwargs={}, name='_Scale', layer_collector=None):
-    l = tf.image.resize_nearest_neighbor(input, (width, height), **kwargs, name=name)
+def Scale(input, width, height, name='_Scale', layer_collector=None, *args, **kwargs):
+    l = tf.image.resize_nearest_neighbor(input, (width, height), *args, **kwargs, name=name)
     safe_append(layer_collector, l)
     return l
 
 
-def BatchNorm(input, kwargs={}, name='_BatchNorm', layer_collector=None):
-    l = tf.layers.batch_normalization(input, **kwargs, name=name)
+def BatchNorm(input, name='_BatchNorm', layer_collector=None, *args, **kwargs):
+    l = tf.layers.batch_normalization(input, *args, **kwargs, name=name)
     safe_append(layer_collector, l)
     return l
 
 
-def Softmax(input, kwargs={}, name='_Softmax', layer_collector=None):
-    l = tf.nn.softmax(input, **kwargs, name=name)
+def Softmax(input, name='_Softmax', layer_collector=None, *args, **kwargs):
+    l = tf.nn.softmax(input, *args, **kwargs, name=name)
     safe_append(layer_collector, l)
     return l
+
+
+def Transpose(input, permutation, name='_Transpose', layer_collector=None):
+    l = tf.transpose(input, permutation)
+    safe_append(layer_collector, l)
+    return l
+
+
+

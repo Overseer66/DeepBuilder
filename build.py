@@ -19,8 +19,8 @@ class Builder(object):
         with tf.variable_scope(scope, reuse=reuse):
             for idx, (layer_dict) in enumerate(self.architecture):
                 method = layer_dict['method']
-                args = layer_dict['args']
-                kwargs = layer_dict['kwargs']
+                args = layer_dict['args'] if 'args' in layer_dict else ()
+                kwargs = layer_dict['kwargs'] if 'kwargs' in layer_dict else {}
                 with tf.variable_scope('Layer' + str(idx), reuse=reuse):
                     if 'layer_collector' in inspect.signature(method).parameters.keys():
                         kwargs['layer_collector'] = layer_collector

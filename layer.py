@@ -4,14 +4,14 @@ import numpy as np
 from .util import *
 
 
-def reshape(input, shape, name='_Reshape', layer_collector=None, param_collector=None):
+def reshape(input, shape, name='_Reshape', layer_collector=None):
     l = tf.reshape(input, shape, name=name)
     safe_append(layer_collector, l)
 
     return l
 
 
-def flatten(input, name='_Dense', layer_collector=None, param_collector=None):
+def flatten(input, name='_Dense', layer_collector=None):
     try:
         flat_size = int(np.prod(input.get_shape()[1:]))
     except:
