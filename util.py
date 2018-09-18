@@ -2,9 +2,10 @@ import tensorflow as tf
 import collections
 
 def AppendInputs(input, layer_collector):
-    for source in input:
-        safe_append(layer_collector, source)
-    return input
+    sources, names = input
+    for source, name in zip(sources, names):
+        safe_append(layer_collector, source, name)
+    return sources
 
 
 def LayerIndexer(input, indices):
@@ -28,23 +29,37 @@ def LayerSelector(input, names, layer_collector):
 
 
 def SearchLayer(layers, name):
-    for layer in layers:
-        if type(layer) != list and type(layer) != tuple:
-            fullname = layer.name.split(':')[0]
-            idx = fullname.find(name)
-            if idx != -1:
-                if idx == 0 or fullname[idx-1] != '/':
+    if type(layers) == list or type(layers) == tuple:
+        for layer in layers:
+            if type(layer) != list and type(layer) != tuple:
+                fullname = layer.name.split(':')[0]
+                idx = fullname.find(name)
+                if idx != -1:
+                    if idx == 0 or fullname[idx-1] != '/':
+                        return layer
+            else:
+                layer = SearchLayer(layer, name)
+                if layer != None:
                     return layer
+    elif type(layers) == dict:
+        for key in layers:
+            if key == name:
+                return layers[key]
+
+        
+
+def safe_append(target, value, name=None):
+    if type(target) == list:
+        if value not in target:
+            target.append(value)
+    if type(target) == dict and name != None:
+        if name not in target:
+            target[name] = value
+        elif type(target[name]) == list and value not in target[name]:
+            target[name].appentarget(value)
         else:
-            layer = SearchLayer(layer, name)
-            if layer != None:
-                return layer
-
-
-def safe_append(l, v):
-    if type(l) == list:
-        if v not in l:
-            l.append(v)
+            prev = target[name]
+            target[name] = [prev, value]
 
 
 class ScopeSelector(object):

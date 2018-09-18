@@ -8,7 +8,7 @@ class Builder(object):
         self.architecture = architecture
 
     def __call__(self, input, scope=None, reuse=False):
-        layer_collector = []
+        layer_collector = {}
         param_collector = []
 
         last_layer = input

@@ -6,7 +6,7 @@ from .util import *
 
 def reshape(input, shape, name='Reshape', layer_collector=None):
     l = tf.reshape(input, shape, name=name)
-    safe_append(layer_collector, l)
+    safe_append(layer_collector, l, name)
 
     return l
 
@@ -18,7 +18,7 @@ def flatten(input, name='Dense', layer_collector=None):
         flat_size = tf.reduce_prod(tf.shape(input)[1:])
 
     l = tf.reshape(input, (-1, flat_size), name=name)
-    safe_append(layer_collector, l)
+    safe_append(layer_collector, l, name)
 
     return l
 
@@ -38,19 +38,19 @@ def fully_connected_layer(
     with ScopeSelector(name, False):
         w = tf.get_variable(weight_name, [input.get_shape()[-1], output_size], initializer=initializer)
         b = tf.get_variable(bias_name, [output_size], initializer=initializer, dtype=tf.float32)
-    safe_append(param_collector, w)
-    safe_append(param_collector, b)
+    safe_append(param_collector, w, name)
+    safe_append(param_collector, b, name)
 
     l = tf.nn.bias_add(tf.matmul(input, w), b, name=name if not activation else None)
-    safe_append(layer_collector, l)
+    safe_append(layer_collector, l, name if not activation else None)
 
     if batch_norm_param != None:
         l = tf.layers.batch_normalization(l, **batch_norm_param, name=name + '_batch_norm')
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     if activation:
         l = activation(l, name=name)
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     return l
 
@@ -75,20 +75,20 @@ def conv_2d(
     with ScopeSelector(name, False):
         w = tf.get_variable(weight_name, kernel_size, initializer=initializer)
         b = tf.get_variable(bias_name, kernel_size[-1], initializer=initializer)
-    safe_append(param_collector, w)
-    safe_append(param_collector, b)
+    safe_append(param_collector, w, name)
+    safe_append(param_collector, b, name)
     c = tf.nn.conv2d(input, w, strides=stride_size, padding=padding)
 
     l = tf.nn.bias_add(c, b, name=name if not activation else None)
-    safe_append(layer_collector, l)
+    safe_append(layer_collector, l, name if not activation else None)
 
     if batch_norm_param != None:
         l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     if activation:
         l = activation(l, name=name)
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     return l
 
@@ -118,20 +118,20 @@ def deconv_2d(
     with ScopeSelector(name, False):
         w = tf.get_variable(weight_name, kernel_size, initializer=initializer)
         b = tf.get_variable(bias_name, kernel_size[-2], initializer=initializer)
-    safe_append(param_collector, w)
-    safe_append(param_collector, b)
+    safe_append(param_collector, w, name)
+    safe_append(param_collector, b, name)
     c = tf.nn.conv2d_transpose(input, w, output_shape=output_shape, strides=stride_size, padding=padding)
 
     l = tf.nn.bias_add(c, b, name=name if not activation else None)
-    safe_append(layer_collector, l)
+    safe_append(layer_collector, l, name if not activation else None)
 
     if batch_norm_param != None:
         l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     if activation:
         l = activation(l, name=name)
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
 
     return l
@@ -146,7 +146,7 @@ def max_pool(
         layer_collector=None
     ):
     l = tf.nn.max_pool(input, kernel_size, stride_size, padding, name=name)
-    safe_append(layer_collector, l)
+    safe_append(layer_collector, l, name)
 
     return l
 
@@ -172,7 +172,7 @@ def repeat(
     for idx in range(count):
         with tf.variable_scope(name+'_'+str(idx+1)):
             l = method(l, *args, **kwargs)
-            safe_append(layer_collector, l)
+            safe_append(layer_collector, l, name)
 
     return l
 
@@ -189,10 +189,11 @@ def residual(
     with ScopeSelector(name if not activation else None, False):
         l = repeat(input, layer_dict, step, layer_collector=layer_collector, param_collector=param_collector)
         l = tf.add(l, input)
+        safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     return l
 
@@ -217,11 +218,11 @@ def dense_connection(
     with ScopeSelector(name if not activation else None, False):
         l = method(input, *args, **kwargs)
         l = tf.concat((input, l), axis=3)
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     return l
 
@@ -248,7 +249,7 @@ def dense_block(
 
     if activation:
         l = activation(l, name=name)
-        safe_append(layer_collector, l)
+        safe_append(layer_collector, l, name)
 
     return l
 
