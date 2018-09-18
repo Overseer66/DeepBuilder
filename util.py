@@ -56,7 +56,7 @@ def safe_append(target, value, name=None):
         if name not in target:
             target[name] = value
         elif type(target[name]) == list and value not in target[name]:
-            target[name].appentarget(value)
+            target[name].append(value)
         else:
             prev = target[name]
             target[name] = [prev, value]
