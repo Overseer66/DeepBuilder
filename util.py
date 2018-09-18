@@ -28,24 +28,17 @@ def LayerSelector(input, names, layer_collector):
 
 
 def SearchLayer(layers, name):
-    l = []
     for layer in layers:
         if type(layer) != list and type(layer) != tuple:
             fullname = layer.name.split(':')[0]
             idx = fullname.find(name)
             if idx != -1:
                 if idx == 0 or fullname[idx-1] != '/':
-                    l.append(layer)
+                    return layer
         else:
             layer = SearchLayer(layer, name)
-            try:
-                l += layer
-            except:
-                l.append(layer)
-
-    if len(l) == 1:
-        l = l[0]
-    return l
+            if layer != None:
+                return layer
 
 
 def safe_append(l, v):
