@@ -160,8 +160,8 @@ def repeat(
         param_collector=None,
     ):
     method = layer_dict['method']
-    args = layer_dict['args']
-    kwargs = layer_dict['kwargs']
+    args = layer_dict['args'] if 'args' in layer_dict else ()
+    kwargs = layer_dict['kwargs'] if 'kwargs' in layer_dict else {}
 
     if 'layer_collector' in inspect.signature(method).parameters.keys():
         kwargs['layer_collector'] = layer_collector
@@ -186,8 +186,10 @@ def residual(
         layer_collector=None,
         param_collector=None,
     ):
-    with ScopeSelector(name if not activation else None, False):
+    with tf.variable_scope(name):
         l = repeat(input, layer_dict, step, layer_collector=layer_collector, param_collector=param_collector)
+
+    with ScopeSelector(name if not activation else None, False):
         l = tf.add(l, input)
         safe_append(layer_collector, l, name if not activation else None)
 
@@ -207,17 +209,18 @@ def dense_connection(
         param_collector=None,
     ):
     method = layer_dict['method']
-    args = layer_dict['args']
-    kwargs = layer_dict['kwargs']
+    args = layer_dict['args'] if 'args' in layer_dict else ()
+    kwargs = layer_dict['kwargs'] if 'kwargs' in layer_dict else {}
 
     if 'layer_collector' in inspect.signature(method).parameters.keys():
         kwargs['layer_collector'] = layer_collector
     if 'param_collector' in inspect.signature(method).parameters.keys():
         kwargs['param_collector'] = param_collector
 
-    with ScopeSelector(name if not activation else None, False):
+    with tf.variable_scope(name):
         l = method(input, *args, **kwargs)
-        l = tf.concat((input, l), axis=3)
+    with ScopeSelector(name if not activation else None, False):
+        l = tf.concat((input, l), axis=len(l.shape)-1)
         safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
@@ -238,14 +241,15 @@ def dense_block(
     ):
     layer_dict = {
         'method': dense_connection,
-        'args': (),
         'kwargs': {
             'layer_dict': layer_dict
         }
     }
 
-    with ScopeSelector(name if not activation else None, False):
+    # with ScopeSelector(name if not activation else None, False):
+    with tf.variable_scope(name):
         l = repeat(input, layer_dict, iterate, layer_collector=layer_collector, param_collector=param_collector)
+        safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
