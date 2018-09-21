@@ -47,4 +47,13 @@ def Transpose(input, permutation, name='Transpose', layer_collector=None):
     return l
 
 
+def Concatenate(input, name='Concat', layer_collector=None):
+    l = tf.concat(input, axis=len(input[0].shape)-1)
+    safe_append(layer_collector, l, name)
+    return l
 
+
+def Add(input, name='Input', layer_collector=None):
+    l = tf.add(*input)
+    safe_append(layer_collector, l, name)
+    return l
