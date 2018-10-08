@@ -170,9 +170,9 @@ def repeat(
 
     l = input
     for idx in range(count):
-        with tf.variable_scope(name+'_'+str(idx+1)):
+        with tf.variable_scope(name+'_'+str(idx+1) if name else 'repeat_%d' % (idx+1)):
             l = method(l, *args, **kwargs)
-            safe_append(layer_collector, l, name)
+    safe_append(layer_collector, l, name)
 
     return l
 
@@ -187,7 +187,7 @@ def residual(
         param_collector=None,
     ):
     with tf.variable_scope(name):
-        l = repeat(input, layer_dict, step, layer_collector=layer_collector, param_collector=param_collector)
+        l = repeat(input, layer_dict, step, layer_collector=layer_collector, param_collector=param_collector, name=None)
 
     with ScopeSelector(name if not activation else None, False):
         l = tf.add(l, input)
@@ -248,8 +248,8 @@ def dense_block(
 
     # with ScopeSelector(name if not activation else None, False):
     with tf.variable_scope(name):
-        l = repeat(input, layer_dict, iterate, layer_collector=layer_collector, param_collector=param_collector)
-        safe_append(layer_collector, l, name if not activation else None)
+        l = repeat(input, layer_dict, iterate, layer_collector=layer_collector, param_collector=param_collector, name=None)
+    safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
