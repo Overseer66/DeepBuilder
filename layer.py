@@ -200,6 +200,47 @@ def residual(
     return l
 
 
+def project_shortcut(
+    input,
+    layer_dict,
+    depth,
+    step=2,
+    activation=tf.nn.relu,
+    name='ProjectShortcut',
+    layer_collector=None,
+    param_collector=None,
+    ):
+    method = layer_dict['method']
+    args = layer_dict['args'] if 'args' in layer_dict else ()
+    kwargs = layer_dict['kwargs'] if 'kwargs' in layer_dict else {}
+    if 'layer_collector' in inspect.signature(method).parameters.keys():
+        kwargs['layer_collector'] = layer_collector
+    if 'param_collector' in inspect.signature(method).parameters.keys():
+        kwargs['param_collector'] = param_collector
+
+    with tf.variable_scope(name):
+        kwargs['stride_size'] = (1, 2, 2, 1)
+        kwargs['kernel_size'] = (1, 1, -1, depth)
+        projected = method(input, *args, **kwargs, name='projected')
+
+        kwargs['kernel_size'] = (3, 3, -1, depth)
+        l = method(input, *args, **kwargs, name='shortcut')
+
+        kwargs['stride_size'] = (1, 1, 1, 1)
+
+        l = repeat(l, layer_dict, step-1, layer_collector=layer_collector, param_collector=param_collector, name=None)
+
+    with ScopeSelector(name if not activation else None, False):
+        l = tf.add(l, projected)
+        safe_append(layer_collector, l, name if not activation else None)
+
+    if activation:
+        l = activation(l, name=name)
+        safe_append(layer_collector, l, name)
+
+    return l
+
+
 def dense_connection(
         input,
         layer_dict,
