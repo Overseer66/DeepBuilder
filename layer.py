@@ -93,6 +93,45 @@ def conv_2d(
     return l
 
 
+def depthwise_conv_2d(
+        input,
+        kernel_size,
+        stride_size=[1, 1, 1, 1],
+        padding='SAME',
+        initializer=tf.truncated_normal_initializer(stddev=2e-2),
+        activation=tf.nn.relu,
+        batch_norm_param=None,
+        name='DepthwiseConv2D',
+        weight_name = 'weights',
+        bias_name = 'biases',
+        layer_collector=None,
+        param_collector=None
+    ):
+    if type(kernel_size) == tuple: kernel_size = list(kernel_size)
+    if kernel_size[2] == -1: kernel_size = [kernel_size[0], kernel_size[1], input.get_shape()[-1], kernel_size[3]]
+
+    with ScopeSelector(name, False):
+        w = tf.get_variable(weight_name, kernel_size, initializer=initializer)
+        b = tf.get_variable(bias_name, input.get_shape()[-1]*kernel_size[-1], initializer=initializer)
+    safe_append(param_collector, w, name)
+    safe_append(param_collector, b, name)
+    c = tf.nn.depthwise_conv2d(input, w, strides=stride_size, padding=padding)
+
+    l = tf.nn.bias_add(c, b, name=name if not activation else None)
+    safe_append(layer_collector, l, name if not activation else None)
+
+    if batch_norm_param != None:
+        l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
+        safe_append(layer_collector, l, name)
+
+    if activation:
+        l = activation(l, name=name)
+        safe_append(layer_collector, l, name)
+
+    return l
+
+
+
 def deconv_2d(
         input,
         kernel_size,
