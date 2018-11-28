@@ -37,16 +37,17 @@ def fully_connected_layer(
     ):
     with ScopeSelector(name, False):
         w = tf.get_variable(weight_name, [input.get_shape()[-1], output_size], initializer=initializer)
-        b = tf.get_variable(bias_name, [output_size], initializer=initializer, dtype=tf.float32)
+        b = tf.get_variable(bias_name, [output_size], initializer=initializer)
     safe_append(param_collector, w, name)
     safe_append(param_collector, b, name)
 
     l = tf.nn.bias_add(tf.matmul(input, w), b, name=name if not activation else None)
-    safe_append(layer_collector, l, name if not activation else None)
+    safe_append(layer_collector, l, name if not activation and not batch_norm_param else None)
 
     if batch_norm_param != None:
-        l = tf.layers.batch_normalization(l, **batch_norm_param, name=name + '_batch_norm')
-        safe_append(layer_collector, l, name)
+        with ScopeSelector(name, False):
+            l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
+            safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
@@ -80,11 +81,12 @@ def conv_2d(
     c = tf.nn.conv2d(input, w, strides=stride_size, padding=padding)
 
     l = tf.nn.bias_add(c, b, name=name if not activation else None)
-    safe_append(layer_collector, l, name if not activation else None)
+    safe_append(layer_collector, l, name if not activation and not batch_norm_param else None)
 
     if batch_norm_param != None:
-        l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
-        safe_append(layer_collector, l, name)
+        with ScopeSelector(name, False):
+            l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
+            safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
@@ -118,11 +120,12 @@ def depthwise_conv_2d(
     c = tf.nn.depthwise_conv2d(input, w, strides=stride_size, padding=padding)
 
     l = tf.nn.bias_add(c, b, name=name if not activation else None)
-    safe_append(layer_collector, l, name if not activation else None)
+    safe_append(layer_collector, l, name if not activation and not batch_norm_param else None)
 
     if batch_norm_param != None:
-        l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
-        safe_append(layer_collector, l, name)
+        with ScopeSelector(name, False):
+            l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
+            safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
@@ -162,11 +165,12 @@ def deconv_2d(
     c = tf.nn.conv2d_transpose(input, w, output_shape=output_shape, strides=stride_size, padding=padding)
 
     l = tf.nn.bias_add(c, b, name=name if not activation else None)
-    safe_append(layer_collector, l, name if not activation else None)
+    safe_append(layer_collector, l, name if not activation and not batch_norm_param else None)
 
     if batch_norm_param != None:
-        l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
-        safe_append(layer_collector, l, name)
+        with ScopeSelector(name, False):
+            l = tf.layers.batch_normalization(l, **batch_norm_param, name='batch_norm')
+            safe_append(layer_collector, l, name if not activation else None)
 
     if activation:
         l = activation(l, name=name)
